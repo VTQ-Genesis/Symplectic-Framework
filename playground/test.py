@@ -102,6 +102,14 @@ for word in C.codewords():
 
 print("____________________________________________")
 
+
+
+
+
+
+
+
+###############################################################
 # The stuff below are just tests
 class ClassicalCode:
     """The F_2-linear span of generators in F_2^n."""

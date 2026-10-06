@@ -4,11 +4,14 @@ V = F e + F f is the existing coordinate plane. Row reduction uses the
 ordinary F coordinates (a_1, b_1, ..., a_n, b_n), not scalars from V.
 """
 
+# supports returning Linear Code while still being defined
 from __future__ import annotations
 
+# basic imports, dataclass decorator and iterator
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 
+# need type of FieldArray
 from galois import FieldArray
 
 from .symplectic import (
@@ -18,6 +21,7 @@ from .symplectic import (
     _require_same_field,
     omega,
 )
+
 
 
 def _require_code_vector(vector: SymplecticVector, field: type[FieldArray],
@@ -106,6 +110,8 @@ class LinearCode:
         Explicit row reduction makes the pivot convention independent
         of the basis ordering returned by the null-space routine.
         """
+        # compute the matrix of all basis omega pairings, solving for null yields rad 
+        # coefficients to apply to basis vectors
         size = self.dimension_over_field
         gram = self.field.Zeros((size, size))
         for i, left in enumerate(self.basis):
@@ -133,14 +139,20 @@ class LinearCode:
         The returned bases are ordinary RREF bases, not ordered normalized
         symplectic pairs. No codewords are enumerated.
         """
+        # grab coefficients from the matrix of the basis and radical
         coefficients = self._radical_coefficients()
         code_rows = _coefficient_matrix(self.basis, self.field, self.n)
+
+        # perform linear combination so that the rows now reprsent the coeffcients for the vectors 
         radical_rows = coefficients @ code_rows
         radical = LinearCode(
             _vectors_from_rows(radical_rows, self.field, self.n),
             self.field, self.n,
         )
+        # finds the pivot column indices in the radical coefficient matrix
         pivot_columns = {int(row.nonzero()[0][0]) for row in coefficients}
+
+        # compute the symplectic comoplement of the radical
         complement = LinearCode(
             (vector for j, vector in enumerate(self.basis)
              if j not in pivot_columns),

@@ -13,12 +13,16 @@ from quantum_anticodes import (
 
 
 # define the field to work over
-F = GF(2)
+F = GF(4)
 
-#define the basis vectors for each coord plane
+x = 1.0
+
+print(F(x))
+
+# define the basis vectors for each coord plane
 e = VElement(1, 0, field=F)
 f = VElement(0, 1, field=F)
-#zero = VElement(0, 0, field=F)
+# zero = VElement(0, 0, field=F)
 
 
 # define arbitrary basis for code

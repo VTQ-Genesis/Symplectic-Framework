@@ -1,9 +1,3 @@
-"""F-linear codes in V^n, following Section 1 and Definition 2.2.
-
-V = F e + F f is the existing coordinate plane. Row reduction uses the
-ordinary F coordinates (a_1, b_1, ..., a_n, b_n), not scalars from V.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
@@ -58,19 +52,6 @@ def _vectors_from_rows(rows: FieldArray, field: type[FieldArray],
 @dataclass(frozen=True, slots=True, init=False)
 class LinearCode:
     """The F-linear span of generators in the existing symplectic V^n.
-
-    Supply a finite iterable of SymplecticVector objects, a field class from
-    GF(q), and the nonnegative code length n. All vectors must already use
-    that exact field and length. Empty input defines the zero code.
-
-    basis stores the nonzero RREF rows as immutable framework vectors, so
-    reordering or adding dependent generators gives the same code. Row
-    reduction may replace the supplied vectors by linear combinations.
-    No isotropy or nondegeneracy condition is imposed on the code.
-
-    dimension_over_field means dim_F(C); dimension and isorank use
-    Definition 1.7. radical() and symplectic_part() return the subspaces
-    in an orthogonal splitting from Theorem 1.6. Distance is not computed.
     """
 
     basis: tuple[SymplecticVector, ...]
@@ -98,12 +79,6 @@ class LinearCode:
 
     def _radical_coefficients(self) -> FieldArray:
         """RREF basis of radical coefficients relative to self.basis.
-
-        For G[i,j] = omega(b_i,b_j), xG = 0 is equivalent to
-        sum_i x_i*b_i being orthogonal to every vector of C (Def. 1.5).
-        galois solves this homogeneous system over the code's field.
-        Explicit row reduction makes the pivot convention independent
-        of the basis ordering returned by the null-space routine.
         """
         size = self.dimension_over_field
         gram = self.field.Zeros((size, size))
@@ -113,24 +88,7 @@ class LinearCode:
         return gram.left_null_space().row_reduce()
 
     def symplectic_decomposition(self) -> tuple[LinearCode, LinearCode]:
-        """Return (rad(C), K) with C = rad(C) direct-sum K (Thm. 1.6).
-
-        Both results are LinearCode subspaces with the same field and n.
-        The splitting is orthogonal and K is nondegenerate. The radical
-        is unique, but K is not: choose original RREF code basis vectors
-        at the nonpivot columns of the RREF radical coefficient matrix.
-        This makes the choice deterministic for the stored coordinates
-        and field presentation, not intrinsic to the abstract space.
-
-        A radical coefficient row has its own pivot coordinate; unit rows
-        at the remaining coordinates complete it to a basis of F^size.
-        Hence their corresponding code vectors complement the radical.
-        Any such complement is nondegenerate: a vector of K orthogonal
-        to K is also orthogonal to the radical, so lies in rad(C) and K,
-        whose intersection is zero.
-
-        The returned bases are ordinary RREF bases, not ordered normalized
-        symplectic pairs. No codewords are enumerated.
+        """Return (rad(C), K) with C = rad(C) direct-sum K (symplectic)
         """
         coefficients = self._radical_coefficients()
         code_rows = _coefficient_matrix(self.basis, self.field, self.n)
@@ -148,27 +106,18 @@ class LinearCode:
         return radical, complement
 
     def radical(self) -> LinearCode:
-        """Return rad(C) = C intersect C-perp as a subspace (Def. 1.5).
-
-        This is the space of codewords orthogonal to all of C, not generally
-        a largest isotropic subspace. It keeps the original field and n.
+        """Return rad(C) = C intersect C-perp as a subspace
         """
         return self.symplectic_decomposition()[0]
 
     def symplectic_part(self) -> LinearCode:
         """Return the chosen nondegenerate complement K to rad(C).
-
-        See symplectic_decomposition() for the deterministic choice and
-        nonuniqueness. For an isotropic code K is the zero subspace.
         """
         return self.symplectic_decomposition()[1]
 
     @property
     def dimension(self) -> int:
-        """Paper dimension dim(C): number of symplectic pairs (Def. 1.7).
-
-        This equals (dim_F(C) - dim_F(rad(C)))/2, half the rank of the
-        restricted alternating form. It is not dimension_over_field.
+        """Paper dimension dim(C): number of symplectic pairs
         """
         radical_dimension = self._radical_coefficients().shape[0]
         return (self.dimension_over_field - radical_dimension) // 2
@@ -176,9 +125,6 @@ class LinearCode:
     @property
     def isorank(self) -> int:
         """Maximum ordinary F-dimension of an isotropic subspace of C.
-
-        Definition 1.7 gives irk(C) = dim(C) + dim_F(rad(C)), equivalently
-        dim_F(C) - dim(C). This returns an integer, not a subspace.
         """
         return self.dimension_over_field - self.dimension
 
@@ -189,16 +135,6 @@ class LinearCode:
 
     def puncture(self, indices: Iterable[int]) -> LinearCode:
         """Return pi_J(C), keeping the coordinates in J (Definition 2.14).
-
-        Supply distinct Python integer labels in 1,...,n, as in the paper.
-        The output follows increasing original labels, regardless of input
-        order. This keeps J; to delete J instead, pass its complement.
-        The result has length len(J) over the same field and is reindexed
-        1,...,len(J) for subsequent coordinate operations. Empty J returns
-        the zero code in V^0; full J returns a code equal to self.
-
-        Projection is F-linear, so projecting a basis spans the image.
-        LinearCode removes any zero or dependent projected generators.
         """
         # ensure the indices are in the appropriate python format and are valid for the length
         positions = _coordinate_indices(indices, self.n)
@@ -212,17 +148,6 @@ class LinearCode:
     
     def restrict(self, indices: Iterable[int]) -> LinearCode:
         """Return C intersect A_J at the original length n (Section 2.3).
-
-        Use the same distinct one-based labels as puncture(). Keep exactly
-        the codewords that vanish outside J, retaining those zero positions.
-        The result need not be an anticode. The original code is unchanged.
-
-        If G is the basis matrix over F, solve x G_outside = 0 using
-        galois's left_null_space(). The rows x G span the restriction.
-        This includes cancellations between basis vectors; both F columns
-        of each outside V coordinate are constrained together. No codewords
-        are enumerated. Empty J returns the zero code of length n; full J
-        returns a code equal to self. Zero codes and n=0 are supported.
         """
         # keep the code words supported on the J, then return that as new code
         # first ensure that the indices are valid 
@@ -248,17 +173,6 @@ class LinearCode:
 
     def restrictions(self) -> Iterator[tuple[tuple[int, ...], LinearCode]]:
         """Yield (J, C intersect A_J) for every coordinate subset J.
-
-        Each J is an increasing tuple of one-based labels. Subsets follow
-        size then lexicographic order, as in anticodes(field, n). Include
-        empty and full J; n=0 yields one pair. Each result retains the
-        original field, length and coordinate labels (Section 2.3).
-
-        Distinct subsets remain separate entries even when their restricted
-        codes are equal. Results are computed on demand using restrict();
-        exhausting the iterator performs 2**n restrictions. The original
-        code is unchanged. No ambient anticodes are constructed and no
-        codewords are enumerated.
         """
         # return the iterator of ((subset), words supported)
         return (
@@ -268,12 +182,7 @@ class LinearCode:
         )
 
     def shorten(self, indices: Iterable[int]) -> LinearCode:
-        """Return pi_J(C intersect A_J), keeping J (Definition 2.14).
-
-        Restrict to codewords zero outside J, then puncture onto J. Use
-        distinct one-based labels; outputs follow increasing original labels
-        and have length len(J). Empty J returns the zero code in V^0.
-        The field is preserved and the original code is unchanged.
+        """Return pi_J(C intersect A_J), keeping J 
         """
         # Preserve a one-use iterable for both operations.
         indices = tuple(indices)
@@ -288,10 +197,6 @@ class LinearCode:
 
     def codewords(self) -> Iterator[SymplecticVector]:
         """Yield each codeword once, starting with zero.
-
-        This is optional enumeration: construction only stores a basis.
-        Exhausting this iterator takes |F|**dim_F(C) iterations. Scalars
-        follow galois's integer encoding order, including extension fields.
         """
         # Base-q digits enumerate coefficient tuples without storing all q
         # scalars. The last basis coefficient changes fastest.
@@ -306,8 +211,5 @@ class LinearCode:
 def linear_code(generators: Iterable[SymplecticVector], field: type[FieldArray],
                 n: int) -> LinearCode:
     """Construct C = span_F(generators) <= V^n with an independent basis.
-
-    Example: linear_code([u, v, u + v], field=GF(2), n=2).
-    The field and length are explicit even for an empty generating set.
     """
     return LinearCode(generators, field, n)

@@ -1,11 +1,5 @@
-"""Binary CSS stabilizer construction in the paper's symplectic coordinates.
-
-The output S = e*C1 + f*C2 represents the stabilizer, not the normalizer
-code C = S-perp used in Definition 2.3 and Example 2.5. The paper supplies
-the symplectic framework; it does not explicitly define these CSS routines.
-"""
 from galois import GF, FieldArray
-
+import numpy as np
 from .linear_code import LinearCode, _coefficient_matrix
 from .symplectic import SymplecticVector, VElement
 
@@ -16,18 +10,6 @@ _BINARY_FIELD = GF(2)
 # take in input as field arrays of binary field F([[1,0,1],[0,1,1]])
 def css_construct(G1: FieldArray, G2: FieldArray) -> LinearCode:
     """Return the CSS stabilizer subspace S = e*C1 direct-sum f*C2.
-
-    G1 and G2 must be two-dimensional galois.GF(2) arrays whose rows
-    generate classical binary codes of the same length n. Require
-    G1 @ G2.T = 0 over GF(2), equivalently C1 <= C2-perp for the ordinary
-    binary dot product. Lists, ordinary NumPy arrays, SymplecticVector
-    objects, and arrays over other fields are not implicitly converted.
-
-    Zero, duplicate, and dependent rows are accepted. To specify a zero
-    classical code use GF(2).Zeros((0, n)); n=0 is supported. Inputs are
-    unchanged. The returned LinearCode has length n and ordinary dimension
-    rank(G1) + rank(G2). It is isotropic, so its paper dimension is zero;
-    this is not the number of encoded logical qubits of the quantum code.
     """
     # ensure we have the matrix is only of binary and correct dimension (matrix)
     for matrix in (G1, G2):
@@ -68,18 +50,6 @@ def css_construct(G1: FieldArray, G2: FieldArray) -> LinearCode:
 # L = eC1 + fC2 such that C1 in C2.T
 def reverse_css(code: LinearCode) -> tuple[FieldArray, FieldArray]:
     """Recover binary generator matrices (G1, G2) from a CSS stabilizer S.
-
-    The input must be a LinearCode over GF(2), isotropic and equal to the
-    sum of its pure-e and pure-f subspaces in the fixed coordinates.
-    Reject noncommuting codes and codes that do not split this way with
-    ValueError. No change of local e,f basis is attempted.
-
-    Return independent RREF generators for C1 = {a : e*a in S} and
-    C2 = {b : f*b in S}. Thus css_construct(*reverse_css(S)) == S, but
-    original generator matrices need not be recovered row-for-row.
-    A zero sector returns shape (0, S.n). The input is unchanged; returned
-    arrays are independently allocated and may be edited by the caller.
-    Codewords are not enumerated.
     """
     # ensure we have appropriate input, so much be over binary
     if not isinstance(code, LinearCode):
@@ -105,3 +75,73 @@ def reverse_css(code: LinearCode) -> tuple[FieldArray, FieldArray]:
     if reconstructed != code:
         raise ValueError("the code does not split into pure-e and pure-f parts")
     return G1, G2
+
+
+# take in GF(2)([[]]) matrix objects and return the tuple of Lx and Lz new codes
+def choice(Gx: FieldArray, Gz: FieldArray) -> tuple[FieldArray, FieldArray]:
+    """Choose classical complements and append identity-coordinate blocks.
+    """
+    # Ensure that the given is of the correct type, a matrix of F = 2
+    for matrix in (Gx, Gz):
+        if type(matrix) is not _BINARY_FIELD or matrix.ndim != 2:
+            raise TypeError("generators must be two-dimensional GF(2) arrays")
+    # ensure the length (number of columns is the same)
+    if Gx.shape[1] != Gz.shape[1]:
+        raise ValueError("both classical codes must have the same length")
+
+    # Grab the codes cz and cx
+    cz = Gz.row_space()
+    cx = Gx.row_space()
+
+    # grab dx = cz perp and same for dz
+    dx = cz.null_space()
+    dz = cx.null_space()
+
+    # compute the basis for these 
+    hx = dx.row_space()
+    hz = dz.row_space()
+
+    # Choose rows in Cz that add new independent directions to Dz
+    bz_rows = []
+    # span starts as all of dz
+    span = dz
+    # loop through basis in cz looking if it adds independent direction
+    for v in cz:
+        # stack v in cz under span dz and generate basis
+        extended = np.vstack((span, v)).row_space()
+        # check if adding this vector increased the # rows, ie new direction
+        if extended.shape[0] > span.shape[0]:
+            bz_rows.append(v)
+            span = extended
+    # if non empty rows store the matrix of the rows, else make it 0 code, so no error      
+    bz = (np.vstack(bz_rows) if bz_rows
+          else _BINARY_FIELD.Zeros((0, cz.shape[1])))
+
+    # Choose rows in Cx that add new independent directions to Dx
+    bx_rows = []
+    span = dx
+    for v in cx:
+        extended = np.vstack((span, v)).row_space()
+        if extended.shape[0] > span.shape[0]:
+            bx_rows.append(v)
+            span = extended
+    bx = (np.vstack(bx_rows) if bx_rows
+          else _BINARY_FIELD.Zeros((0, cx.shape[1])))
+
+    # create final matrices for the block
+    ax = bx.row_space()
+    az = bz.row_space()
+    # grab num rows for ax and az
+    kx = ax.shape[0]
+    kz = az.shape[0]
+
+    # Construct the Lx and Lz matrices
+    Lx = _BINARY_FIELD(np.block([
+        [hx, _BINARY_FIELD.Zeros((hx.shape[0], kx))],
+        [ax, _BINARY_FIELD.Identity(kx)],
+    ]))
+    Lz = _BINARY_FIELD(np.block([
+        [hz, _BINARY_FIELD.Zeros((hz.shape[0], kz))],
+        [az, _BINARY_FIELD.Identity(kz)],
+    ]))
+    return Lx.row_space(), Lz.row_space()

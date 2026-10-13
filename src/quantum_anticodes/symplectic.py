@@ -1,10 +1,3 @@
-"""Finite-field coordinate realization of Section 1, Definitions 1.1 and 1.2.
-
-V = F e + F f, with omega(e, f) = 1. V^n consists of n mutually
-orthogonal copies of V. The default field is F_2. This coordinate model
-implements vectors and their form, not the paper's subspace theory.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
@@ -56,12 +49,6 @@ def _field_repr(field: type[FieldArray]) -> str:
 @dataclass(frozen=True, slots=True)
 class VElement:
     """The element a*e + b*f of V over the selected finite field.
-
-    Use VElement(a, b, field=GF(q)); omitting field retains F_2. Coefficients
-    are stored as integer encodings in [0, q), as used by galois, not as
-    residues modulo q in extension fields. Matching galois scalars are also
-    accepted and copied. Booleans, floats and implicit reduction are rejected.
-    V is a two-dimensional vector space over F, not the field of order q^2.
     """
 
     a: int
@@ -128,11 +115,6 @@ f = VElement(0, 1)
 @dataclass(frozen=True, slots=True, init=False)
 class SymplecticVector:
     """An immutable tuple (v_1, ..., v_n) in the orthogonal direct sum V^n.
-
-    Infer the field from VElement coordinates, or supply field=GF(q).
-    Literal integer 0 denotes the zero coordinate in that field. Empty and
-    all-literal-zero inputs default to F_2 unless a field is supplied.
-    n is the coordinate count; the ordinary F dimension of V^n is 2*n.
     """
 
     coordinates: tuple[VElement, ...]
@@ -243,14 +225,7 @@ def omega(u: SymplecticVector, v: SymplecticVector) -> int | FieldArray: ...
 
 def omega(u: VElement | SymplecticVector,
           v: VElement | SymplecticVector) -> int | FieldArray:
-    """Evaluate the field-valued form of Definitions 1.1-1.2.
-
-    omega(ae+bf, ce+df) = ad-bc. For tuples, sum the local pairings in F,
-    making distinct coordinate planes orthogonal. Operands must have matching
-    types, fields and lengths. The empty sum on V^0 is the field's zero.
-    Return a galois field scalar, except over F_2 where the original Python
-    integer 0/1 return type is preserved. Use u.field(omega(u, v)) when a
-    field scalar is needed uniformly across all fields.
+    """omega fucntion as defined
     """
     if isinstance(u, VElement) and isinstance(v, VElement):
         _require_same_field(u.field, v.field)

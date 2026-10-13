@@ -1,5 +1,3 @@
-"""Validation shared by the coordinate operations of Section 2."""
-
 from collections.abc import Iterable
 
 
@@ -12,9 +10,6 @@ def _require_length(n: int) -> None:
 
 def _coordinate_indices(indices: Iterable[int], n: int) -> tuple[int, ...]:
     """Validate paper labels 1,...,n and return sorted zero-based positions.
-
-    A subset may be supplied in any order, but repetitions are rejected
-    rather than silently discarded. Consume an input iterator only once.
     """
     labels = tuple(indices)
     for label in labels:

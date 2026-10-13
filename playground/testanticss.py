@@ -1,7 +1,3 @@
-"""Run from the repository root:
-PYTHONPATH=src .venv/bin/python practice/010-css-construction/test.py
-"""
-
 from quantum_anticodes import *
 
 

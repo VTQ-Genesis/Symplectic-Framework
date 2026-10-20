@@ -24,6 +24,7 @@ def schur_product_codes(G1: FieldArray, G2: FieldArray) -> FieldArray:
             raise TypeError("generators must be two-dimensional finite-field arrays")
     # require the same field 
     _require_same_field(type(G1), type(G2))
+    
     # check they both have same lenght (# columns)
     if G1.shape[1] != G2.shape[1]:
         raise ValueError("both classical codes must have the same length")

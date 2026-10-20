@@ -78,6 +78,7 @@ def reverse_css(code: LinearCode) -> tuple[FieldArray, FieldArray]:
 
 
 # take in GF(2)([[]]) matrix objects and return the tuple of Lx and Lz new codes
+# take in the generator matrices
 def choice(Gx: FieldArray, Gz: FieldArray) -> tuple[FieldArray, FieldArray]:
     """Choose classical complements and append identity-coordinate blocks.
     """
@@ -89,18 +90,23 @@ def choice(Gx: FieldArray, Gz: FieldArray) -> tuple[FieldArray, FieldArray]:
     if Gx.shape[1] != Gz.shape[1]:
         raise ValueError("both classical codes must have the same length")
 
+
     # Grab the codes cz and cx
     cz = Gz.row_space()
     cx = Gx.row_space()
 
+
+
     # grab dx = cz perp and same for dz
     dx = cz.null_space()
     dz = cx.null_space()
-
+   
     # compute the basis for these 
     hx = dx.row_space()
     hz = dz.row_space()
+   
 
+    
     # Choose rows in Cz that add new independent directions to Dz
     bz_rows = []
     # span starts as all of dz
@@ -131,6 +137,7 @@ def choice(Gx: FieldArray, Gz: FieldArray) -> tuple[FieldArray, FieldArray]:
     # create final matrices for the block
     ax = bx.row_space()
     az = bz.row_space()
+  
     # grab num rows for ax and az
     kx = ax.shape[0]
     kz = az.shape[0]

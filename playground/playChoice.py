@@ -8,6 +8,7 @@ from quantum_anticodes import (
     trans_DJ,
 )
 
+
 F2 = GF(2)
 
 # Schur product of two vectors.
@@ -29,16 +30,15 @@ print("\nClassical puncturing:\n", punctured, sep="")
 print("\nClassical shortening:\n", shortened, sep="")
 
 # Choice takes two binary generator matrices and returns two matrices.
-Gx = F2.Identity(2)
-Gz = F2.Identity(2)
+Gx = F2([[1,1,1,1], [1,1,0,0]])
+Gz = F2([[1,1,0,0], [0,0,1,1],[1,0,1,0]])
 Lx, Lz = choice(Gx, Gz)
 print("\nChoice Lx:\n", Lx, sep="")
 print("\nChoice Lz:\n", Lz, sep="")
 
-# trans_DJ accepts other finite fields too; l is the number of code factors.
-F3 = GF(3)
-C1 = F3([[1, 2]])
+# trans_DJ function
+C1 = F2([[1, 0, 1, 1], [0, 0, 1, 1]])
 result1 = trans_DJ(C1, [1, 2], 1)
-result2 = trans_DJ(C1, [1, 2], 2)
+result2 = trans_DJ(C1, [1, 2], 5)
 print("\ntrans_DJ with l=1:", result1)
-print("trans_DJ with l=2:", result2)
+print("trans_DJ with l=5:", result2)

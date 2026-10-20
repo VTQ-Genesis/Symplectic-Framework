@@ -1,5 +1,5 @@
 from galois import GF
-
+#from flint import nmod_mat
 from .symplectic import SymplecticVector, VElement, e, f, omega, zero
 from .linear_code import LinearCode, linear_code
 from .anticodes import anticode, anticodes

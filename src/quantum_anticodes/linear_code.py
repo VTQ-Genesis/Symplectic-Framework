@@ -134,7 +134,7 @@ class LinearCode:
         return self.field.order ** self.dimension_over_field
 
     def puncture(self, indices: Iterable[int]) -> LinearCode:
-        """Return pi_J(C), keeping the coordinates in J (Definition 2.14).
+        """Return pi_J(C), keeping the coordinates in J, then getting rid of those not.
         """
         # ensure the indices are in the appropriate python format and are valid for the length
         positions = _coordinate_indices(indices, self.n)
@@ -147,12 +147,12 @@ class LinearCode:
 
     
     def restrict(self, indices: Iterable[int]) -> LinearCode:
-        """Return C intersect A_J at the original length n (Section 2.3).
+        """Return C intersect A_J at the original length n. Thus its essentially
         """
         # keep the code words supported on the J, then return that as new code
         # first ensure that the indices are valid 
         positions = _coordinate_indices(indices, self.n)
-        # convert the positions to a set
+        # convert the positions to a set for efficiency of checking inclusion
         selected = set(positions)
         # we store vectors according to their coefficients ((a1,b1),(a2,b2)...)
         # select the coefficient columns that are not in the J subset, ie those that will be omitted
@@ -162,9 +162,12 @@ class LinearCode:
         # represents the generaor matrix for coefficients in F xG
         matrix = _coefficient_matrix(self.basis, self.field, self.n)
 
-        # select all rows, but only the columns outside J, then the null represents the coords being 0 at the columsn outside
+        # gives the coefficients that give the combinations of the outside columns to get 0.
         coefficients = matrix[:, outside_columns].left_null_space()
-        # construct the code
+
+        # construct the new code that will have 0s not in J, as a LC of the matrix,
+        # will be encoded with the 0's at the back as we have the coefficients as 
+        # the null of the columns outside
         restricted_rows = coefficients @ matrix
         return LinearCode(
             _vectors_from_rows(restricted_rows, self.field, self.n),

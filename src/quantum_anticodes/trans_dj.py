@@ -21,8 +21,10 @@ def trans_DJ(C1: FieldArray, J: Iterable[int], l: int) -> bool:
     # basis for the code, then 
     basis = C1.row_space()
     D1 = basis
+
     # no loop variable required, then compute the l schur product of C1
     for _ in range(1, l):
+        # iteratively compute the shchur product between the original code and the updated basis
         D1 = schur_product_codes(D1, basis)
 
     # compute the dual for D1 and shorten
@@ -33,4 +35,5 @@ def trans_DJ(C1: FieldArray, J: Iterable[int], l: int) -> bool:
     # if punctured adds addtional dimensions cant be contained, so check the basis
     # for the matrix
     combined = np.vstack((shortened, punctured)).row_space()
+    # return true if shortened contains punctured, ie punctured adds no new directions
     return bool(combined.shape[0] == shortened.shape[0])

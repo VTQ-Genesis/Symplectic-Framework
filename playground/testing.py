@@ -7,6 +7,6 @@ _BINARY_FIELD = GF(2)
 gx = _BINARY_FIELD([[1,1,1,1], [1,1,0,0]])
 gz = _BINARY_FIELD([[1,1,0,0], [0,0,1,1],[1,0,1,0]])
 
-c = choice(gx, gz)
+c = choi(gx, gz)
 
 print(c)

@@ -1,6 +1,6 @@
 from quantum_anticodes import (
     GF,
-    choice,
+    choi,
     puncture_classical,
     schur_product_codes,
     schur_product_vectors,
@@ -21,7 +21,7 @@ print(code.matrix_x)
 print(code.matrix_z)
 print("___________________")
 
-Lx, Lz = choice(X_matrix, Z_matrix)
+Lx, Lz = choi(X_matrix, Z_matrix)
 print("\nChoice Lx:\n", Lx, sep="")
 print("\nChoice Lz:\n", Lz, sep="")
 

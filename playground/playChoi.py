@@ -1,6 +1,6 @@
 from quantum_anticodes import (
     GF,
-    choice,
+    choi,
     puncture_classical,
     schur_product_codes,
     schur_product_vectors,
@@ -32,9 +32,9 @@ print("\nClassical shortening:\n", shortened, sep="")
 # Choice takes two binary generator matrices and returns two matrices.
 Gx = F2([[1,1,1,1], [1,1,0,0]])
 Gz = F2([[1,1,0,0], [0,0,1,1],[1,0,1,0]])
-Lx, Lz = choice(Gx, Gz)
-print("\nChoice Lx:\n", Lx, sep="")
-print("\nChoice Lz:\n", Lz, sep="")
+Lx, Lz = choi(Gx, Gz)
+print("\nChoi Lx:\n", Lx, sep="")
+print("\nChoi Lz:\n", Lz, sep="")
 
 # trans_DJ function
 C1 = F2([[1, 0, 1, 1], [0, 0, 1, 1]])

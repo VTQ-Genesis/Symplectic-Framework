@@ -79,76 +79,58 @@ def reverse_css(code: LinearCode) -> tuple[FieldArray, FieldArray]:
 
 # take in GF(2)([[]]) matrix objects and return the tuple of Lx and Lz new codes
 # take in the generator matrices
-def choice(Gx: FieldArray, Gz: FieldArray) -> tuple[FieldArray, FieldArray]:
-    """Choose classical complements and append identity-coordinate blocks.
+# take in classical normalizer generators and return the Choi X/Z generators
+def choi(Gx: FieldArray, Gz: FieldArray) -> tuple[FieldArray, FieldArray]:
+    """Return generator matrices for a binary CSS encoder's Choi state.
     """
-    # Ensure that the given is of the correct type, a matrix of F = 2
+    # First we must ensure that the matrices are over a binary field and are actually
+    # matrices
     for matrix in (Gx, Gz):
         if type(matrix) is not _BINARY_FIELD or matrix.ndim != 2:
             raise TypeError("generators must be two-dimensional GF(2) arrays")
-    # ensure the length (number of columns is the same)
+    # ensure the length is the same, num of cols
     if Gx.shape[1] != Gz.shape[1]:
         raise ValueError("both classical codes must have the same length")
 
 
-    # Grab the codes cz and cx
-    cz = Gz.row_space()
+    # Compute the row space of the generators, and then grab the length
     cx = Gx.row_space()
+    cz = Gz.row_space()
+    n = cx.shape[1]
 
+    # We set hx to cz perp, and it follows that we need cz perp to be contained in
+    # cx, if not its unvalid.
+    # Thus check if cz perp adds any additional directions, if yes not contained
+    hx = cz.null_space()
+    combined = np.vstack((cx, hx)).row_space()
+    if combined.shape[0] != cx.shape[0]:
+        raise ValueError("Choi construction requires Cz-perp to be contained in Cx")
 
-
-    # grab dx = cz perp and same for dz
-    dx = cz.null_space()
-    dz = cx.null_space()
-   
-    # compute the basis for these 
-    hx = dx.row_space()
-    hz = dz.row_space()
-   
-
-    
-    # Choose rows in Cz that add new independent directions to Dz
-    bz_rows = []
-    # span starts as all of dz
-    span = dz
-    # loop through basis in cz looking if it adds independent direction
-    for v in cz:
-        # stack v in cz under span dz and generate basis
-        extended = np.vstack((span, v)).row_space()
-        # check if adding this vector increased the # rows, ie new direction
-        if extended.shape[0] > span.shape[0]:
-            bz_rows.append(v)
-            span = extended
-    # if non empty rows store the matrix of the rows, else make it 0 code, so no error      
-    bz = (np.vstack(bz_rows) if bz_rows
-          else _BINARY_FIELD.Zeros((0, cz.shape[1])))
-
-    # Choose rows in Cx that add new independent directions to Dx
-    bx_rows = []
-    span = dx
+    # Keep each row in cx that adds a independent direction to span which is contained
+    # of hx = cz perp, and the other independent directions cx
+    ax_rows = []
+    span = hx
     for v in cx:
         extended = np.vstack((span, v)).row_space()
         if extended.shape[0] > span.shape[0]:
-            bx_rows.append(v)
+            ax_rows.append(v)
             span = extended
-    bx = (np.vstack(bx_rows) if bx_rows
-          else _BINARY_FIELD.Zeros((0, cx.shape[1])))
 
-    # create final matrices for the block
-    ax = bx.row_space()
-    az = bz.row_space()
-  
-    # grab num rows for ax and az
-    kx = ax.shape[0]
-    kz = az.shape[0]
 
-    # Construct the Lx and Lz matrices
+    # create ax, then if empty, just make the empty code
+    ax = (np.vstack(ax_rows) if ax_rows
+          else _BINARY_FIELD.Zeros((0, n)))
+
+    # grab the number of rows of the ax matrix
+    k = ax.shape[0]
+
+    # Compute the Lx maually as the block matrix
     Lx = _BINARY_FIELD(np.block([
-        [hx, _BINARY_FIELD.Zeros((hx.shape[0], kx))],
-        [ax, _BINARY_FIELD.Identity(kx)],
-    ]))
-    Lz = _BINARY_FIELD(np.block([
-        [hz, _BINARY_FIELD.Zeros((hz.shape[0], kz))],
-        [az, _BINARY_FIELD.Identity(kz)],
-    ]))
-    return Lx.row_space(), Lz.row_space()
+        [hx, _BINARY_FIELD.Zeros((hx.shape[0], k))],
+        [ax, _BINARY_FIELD.Identity(k)],
+    ])).row_space()
+
+    # Lz must be Lx perp
+    Lz = Lx.null_space()
+    
+    return Lx, Lz

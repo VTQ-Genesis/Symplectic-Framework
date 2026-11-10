@@ -30,7 +30,7 @@ with open("l1_large_supports.json", "w") as file:
     json.dump(filtered_l1, file, indent=2)
 
 with open("l2_large_supports.json", "w") as file:
-    json.dump(filtered_l2, file, indent=2)
+    json.dump(filtered_l2, file, indent=2)X
 
 print("l=1:", list(filtered_l1))
 print("l=2:", list(filtered_l2))

@@ -31,7 +31,8 @@ def trans_DJ(C1: FieldArray, J: Iterable[int], l: int) -> bool:
     dual = D1.null_space()
     shortened = shorten_classical(dual, J)
 
-    # Containment condition is simply if punctured <= shortened
+    # punc(C1) <= short(schur(C1, l).T)
+    # Containment condition is simply if punctured <= null shortened
     # if punctured adds addtional dimensions cant be contained, so check the basis
     # for the matrix
     combined = np.vstack((shortened, punctured)).row_space()

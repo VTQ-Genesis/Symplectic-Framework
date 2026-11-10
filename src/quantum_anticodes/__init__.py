@@ -7,10 +7,11 @@ from .css import choi, css_construct, reverse_css
 from .schur import schur_product_vectors, schur_product_codes
 from .classical import puncture_classical, shorten_classical
 from .trans_dj import trans_DJ
+from .css_scan import scan_css_code
 
 __all__ = ["GF", "VElement", "SymplecticVector", "zero", "e", "f", "omega",
            "LinearCode", "linear_code", "anticode", "anticodes",
            "css_construct", "reverse_css", "choi",
            "schur_product_vectors", "schur_product_codes",
-           "puncture_classical", "shorten_classical", "trans_DJ"]
+           "puncture_classical", "shorten_classical", "trans_DJ", "scan_css_code"]
 
